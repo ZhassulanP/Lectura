@@ -10,33 +10,131 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MaterialsRouteImport } from './routes/materials'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as PresentationsIndexRouteImport } from './routes/presentations.index'
+import { Route as PresentationsIdIndexRouteImport } from './routes/presentations.$id.index'
+import { Route as PresentationsIdFlashcardsDeckIdRouteImport } from './routes/presentations.$id.flashcards.$deckId'
+import { Route as PresentationsIdNotesNotesIdRouteImport } from './routes/presentations.$id.notes.$notesId'
+import { Route as PresentationsIdQuizQuizIdRouteImport } from './routes/presentations.$id.quiz.$quizId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MaterialsRoute = MaterialsRouteImport.update({
+  id: '/materials',
+  path: '/materials',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PresentationsIndexRoute = PresentationsIndexRouteImport.update({
+  id: '/presentations/',
+  path: '/presentations/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PresentationsIdIndexRoute = PresentationsIdIndexRouteImport.update({
+  id: '/presentations/$id/',
+  path: '/presentations/$id/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PresentationsIdFlashcardsDeckIdRoute =
+  PresentationsIdFlashcardsDeckIdRouteImport.update({
+    id: '/presentations/$id/flashcards/$deckId',
+    path: '/presentations/$id/flashcards/$deckId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const PresentationsIdNotesNotesIdRoute =
+  PresentationsIdNotesNotesIdRouteImport.update({
+    id: '/presentations/$id/notes/$notesId',
+    path: '/presentations/$id/notes/$notesId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const PresentationsIdQuizQuizIdRoute =
+  PresentationsIdQuizQuizIdRouteImport.update({
+    id: '/presentations/$id/quiz/$quizId',
+    path: '/presentations/$id/quiz/$quizId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/materials': typeof MaterialsRoute
+  '/settings': typeof SettingsRoute
+  '/presentations/': typeof PresentationsIndexRoute
+  '/presentations/$id/': typeof PresentationsIdIndexRoute
+  '/presentations/$id/flashcards/$deckId': typeof PresentationsIdFlashcardsDeckIdRoute
+  '/presentations/$id/notes/$notesId': typeof PresentationsIdNotesNotesIdRoute
+  '/presentations/$id/quiz/$quizId': typeof PresentationsIdQuizQuizIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/materials': typeof MaterialsRoute
+  '/settings': typeof SettingsRoute
+  '/presentations': typeof PresentationsIndexRoute
+  '/presentations/$id': typeof PresentationsIdIndexRoute
+  '/presentations/$id/flashcards/$deckId': typeof PresentationsIdFlashcardsDeckIdRoute
+  '/presentations/$id/notes/$notesId': typeof PresentationsIdNotesNotesIdRoute
+  '/presentations/$id/quiz/$quizId': typeof PresentationsIdQuizQuizIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/materials': typeof MaterialsRoute
+  '/settings': typeof SettingsRoute
+  '/presentations/': typeof PresentationsIndexRoute
+  '/presentations/$id/': typeof PresentationsIdIndexRoute
+  '/presentations/$id/flashcards/$deckId': typeof PresentationsIdFlashcardsDeckIdRoute
+  '/presentations/$id/notes/$notesId': typeof PresentationsIdNotesNotesIdRoute
+  '/presentations/$id/quiz/$quizId': typeof PresentationsIdQuizQuizIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/materials'
+    | '/settings'
+    | '/presentations/'
+    | '/presentations/$id/'
+    | '/presentations/$id/flashcards/$deckId'
+    | '/presentations/$id/notes/$notesId'
+    | '/presentations/$id/quiz/$quizId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/materials'
+    | '/settings'
+    | '/presentations'
+    | '/presentations/$id'
+    | '/presentations/$id/flashcards/$deckId'
+    | '/presentations/$id/notes/$notesId'
+    | '/presentations/$id/quiz/$quizId'
+  id:
+    | '__root__'
+    | '/'
+    | '/materials'
+    | '/settings'
+    | '/presentations/'
+    | '/presentations/$id/'
+    | '/presentations/$id/flashcards/$deckId'
+    | '/presentations/$id/notes/$notesId'
+    | '/presentations/$id/quiz/$quizId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  MaterialsRoute: typeof MaterialsRoute
+  SettingsRoute: typeof SettingsRoute
+  PresentationsIndexRoute: typeof PresentationsIndexRoute
+  PresentationsIdIndexRoute: typeof PresentationsIdIndexRoute
+  PresentationsIdFlashcardsDeckIdRoute: typeof PresentationsIdFlashcardsDeckIdRoute
+  PresentationsIdNotesNotesIdRoute: typeof PresentationsIdNotesNotesIdRoute
+  PresentationsIdQuizQuizIdRoute: typeof PresentationsIdQuizQuizIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +146,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/materials': {
+      id: '/materials'
+      path: '/materials'
+      fullPath: '/materials'
+      preLoaderRoute: typeof MaterialsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/presentations/': {
+      id: '/presentations/'
+      path: '/presentations'
+      fullPath: '/presentations/'
+      preLoaderRoute: typeof PresentationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/presentations/$id/': {
+      id: '/presentations/$id/'
+      path: '/presentations/$id'
+      fullPath: '/presentations/$id/'
+      preLoaderRoute: typeof PresentationsIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/presentations/$id/flashcards/$deckId': {
+      id: '/presentations/$id/flashcards/$deckId'
+      path: '/presentations/$id/flashcards/$deckId'
+      fullPath: '/presentations/$id/flashcards/$deckId'
+      preLoaderRoute: typeof PresentationsIdFlashcardsDeckIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/presentations/$id/notes/$notesId': {
+      id: '/presentations/$id/notes/$notesId'
+      path: '/presentations/$id/notes/$notesId'
+      fullPath: '/presentations/$id/notes/$notesId'
+      preLoaderRoute: typeof PresentationsIdNotesNotesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/presentations/$id/quiz/$quizId': {
+      id: '/presentations/$id/quiz/$quizId'
+      path: '/presentations/$id/quiz/$quizId'
+      fullPath: '/presentations/$id/quiz/$quizId'
+      preLoaderRoute: typeof PresentationsIdQuizQuizIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  MaterialsRoute: MaterialsRoute,
+  SettingsRoute: SettingsRoute,
+  PresentationsIndexRoute: PresentationsIndexRoute,
+  PresentationsIdIndexRoute: PresentationsIdIndexRoute,
+  PresentationsIdFlashcardsDeckIdRoute: PresentationsIdFlashcardsDeckIdRoute,
+  PresentationsIdNotesNotesIdRoute: PresentationsIdNotesNotesIdRoute,
+  PresentationsIdQuizQuizIdRoute: PresentationsIdQuizQuizIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

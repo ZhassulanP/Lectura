@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./index";
 import type { QuizAnswer, QuizOptions, UploadInput } from "../types";
 
@@ -9,19 +10,31 @@ export const keys = {
   materials: (id: string) => ["presentations", id, "materials"] as const,
 };
 
+function useClientReady() {
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
+  return ready;
+}
+
 export function usePresentations() {
+  const ready = useClientReady();
   return useQuery({
     queryKey: keys.presentations,
     queryFn: api.listPresentations,
+    enabled: ready,
     refetchInterval: (q) =>
-      q.state.data?.some((p) => p.status === "UPLOADING" || p.status === "EXTRACTING") ? 2000 : false,
+      q.state.data?.some((p) => p.status === "UPLOADING" || p.status === "EXTRACTING")
+        ? 2000
+        : false,
   });
 }
 
 export function usePresentation(id: string) {
+  const ready = useClientReady();
   return useQuery({
     queryKey: keys.presentation(id),
     queryFn: () => api.getPresentation(id),
+    enabled: ready,
     refetchInterval: (q) =>
       q.state.data && (q.state.data.status === "EXTRACTING" || q.state.data.status === "UPLOADING")
         ? 2000
@@ -30,11 +43,32 @@ export function usePresentation(id: string) {
 }
 
 export function useSlides(id: string, enabled: boolean) {
-  return useQuery({ queryKey: keys.slides(id), queryFn: () => api.getSlides(id), enabled });
+  const ready = useClientReady();
+  return useQuery({
+    queryKey: keys.slides(id),
+    queryFn: () => api.getSlides(id),
+    enabled: enabled && ready,
+  });
 }
 
-export function useMaterials(id: string) {
-  return useQuery({ queryKey: keys.materials(id), queryFn: () => api.getMaterials(id) });
+export function useMaterials(id: string, enabled = true) {
+  const ready = useClientReady();
+  return useQuery({
+    queryKey: keys.materials(id),
+    queryFn: () => api.getMaterials(id),
+    enabled: enabled && ready,
+  });
+}
+
+export function useMaterialGroups(ids: string[]) {
+  const ready = useClientReady();
+  return useQueries({
+    queries: ids.map((id) => ({
+      queryKey: keys.materials(id),
+      queryFn: () => api.getMaterials(id),
+      enabled: ready,
+    })),
+  });
 }
 
 export function useUpload(onProgress: (pct: number) => void) {
@@ -67,5 +101,16 @@ export function useSubmitAttempt(presentationId: string, quizId: string) {
   return useMutation({
     mutationFn: (answers: QuizAnswer[]) => api.submitAttempt(quizId, answers),
     onSuccess: inv,
+  });
+}
+
+export function useDeletePresentation(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.deletePresentation(id),
+    onSuccess: async () => {
+      qc.removeQueries({ queryKey: keys.presentation(id) });
+      await qc.invalidateQueries({ queryKey: keys.presentations });
+    },
   });
 }

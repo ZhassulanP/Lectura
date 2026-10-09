@@ -23,9 +23,13 @@ export function PresentationList({ items }: { items: Presentation[] }) {
                 <p className="truncate font-medium">{p.title}</p>
                 <p className="truncate text-xs text-muted-foreground">
                   {p.filename} · {formatDate(p.uploadedAt)}
-                  {p.slideCount != null && ` · ${p.slideCount} ${p.fileType === "PPTX" ? "slides" : "pages"}`}
+                  {p.slideCount != null &&
+                    ` · ${p.slideCount} ${p.fileType === "PPTX" ? "slide" : "page"}${p.slideCount === 1 ? "" : "s"}`}
                   {p.subject && ` · ${p.subject}`}
                 </p>
+                <div className="mt-2 sm:hidden">
+                  <StatusBadge status={p.status} />
+                </div>
               </div>
               <div className="hidden sm:block">
                 <StatusBadge status={p.status} />

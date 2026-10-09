@@ -8,13 +8,13 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
+import { USE_MOCKS } from "@/lib/api/config";
 
 function NotFoundComponent() {
   return (
@@ -41,9 +41,6 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
-  useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -81,13 +78,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "SlideWise — Turn lecture slides into study materials" },
-      { name: "description", content: "Upload lecture slides and get grounded notes, quizzes and flashcards." },
-      { property: "og:title", content: "SlideWise" },
-      { property: "og:description", content: "Upload lecture slides and get grounded notes, quizzes and flashcards." },
+      { title: "Lectura — Turn lecture slides into study materials" },
+      {
+        name: "description",
+        content: "Upload lecture slides and get grounded notes, quizzes and flashcards.",
+      },
+      { property: "og:title", content: "Lectura" },
+      {
+        property: "og:description",
+        content: "Upload lecture slides and get grounded notes, quizzes and flashcards.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
@@ -128,6 +130,12 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:p-3 focus:text-primary-foreground"
+      >
+        Skip to content
+      </a>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <SidebarProvider>
         <div className="flex min-h-screen w-full">
@@ -135,10 +143,19 @@ function RootComponent() {
           <div className="flex min-w-0 flex-1 flex-col">
             <header className="sticky top-0 z-10 flex h-14 items-center gap-2 border-b bg-background/85 px-3 backdrop-blur">
               <SidebarTrigger aria-label="Toggle navigation" />
-              <span className="font-display text-lg font-semibold md:hidden">SlideWise</span>
+              <span className="font-display text-lg font-semibold md:hidden">Lectura</span>
             </header>
-            <main className="bg-paper flex-1">
+            <main id="main-content" tabIndex={-1} className="bg-paper min-w-0 flex-1">
               <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-8 sm:py-10">
+                {USE_MOCKS && (
+                  <div
+                    role="note"
+                    className="mb-6 rounded-lg border border-dashed bg-highlight/30 p-4 text-sm"
+                  >
+                    <strong>Demo mode — sample content.</strong> No AI generation or file extraction
+                    takes place. Demo changes reset on refresh.
+                  </div>
+                )}
                 <Outlet />
               </div>
             </main>

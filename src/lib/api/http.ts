@@ -6,6 +6,7 @@ export class ApiError extends Error {
     public status: number,
   ) {
     super(message);
+    this.name = "ApiError";
   }
 }
 
@@ -13,7 +14,7 @@ async function parseError(res: Response): Promise<ApiError> {
   let message = `Request failed (${res.status})`;
   try {
     const body = await res.json();
-    if (body?.message) message = body.message;
+    if (typeof body?.message === "string") message = body.message;
   } catch {
     /* ignore */
   }
@@ -23,16 +24,32 @@ async function parseError(res: Response): Promise<ApiError> {
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
+    const headers = new Headers(init?.headers);
+    if (init?.body && !(init.body instanceof FormData))
+      headers.set("Content-Type", "application/json");
     res = await fetch(`${API_BASE_URL}${path}`, {
       ...init,
-      headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
+      headers,
+      signal: init?.signal ?? AbortSignal.timeout(120_000),
     });
-  } catch {
-    throw new ApiError("Can't reach the SlideWise server. Is the backend running?", 0);
+  } catch (error) {
+    if (
+      error instanceof DOMException &&
+      (error.name === "TimeoutError" || error.name === "AbortError")
+    )
+      throw new ApiError(
+        "The request timed out. Check the server before retrying; a generation may have completed.",
+        408,
+      );
+    throw new ApiError("Can't reach the Lectura server. Is the backend running?", 0);
   }
   if (!res.ok) throw await parseError(res);
   if (res.status === 204) return undefined as T;
-  return (await res.json()) as T;
+  try {
+    return (await res.json()) as T;
+  } catch {
+    throw new ApiError("The server returned an invalid response.", res.status);
+  }
 }
 
 /** Multipart upload with progress reporting (fetch has no upload progress). */
@@ -44,6 +61,9 @@ export function uploadMultipart<T>(
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `${API_BASE_URL}${path}`);
+    xhr.timeout = 120_000;
+    xhr.ontimeout = () =>
+      reject(new ApiError("Upload timed out. Check your presentation list before retrying.", 408));
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
     };
@@ -64,7 +84,7 @@ export function uploadMultipart<T>(
         reject(new ApiError(msg, xhr.status));
       }
     };
-    xhr.onerror = () => reject(new ApiError("Can't reach the SlideWise server.", 0));
+    xhr.onerror = () => reject(new ApiError("Can't reach the Lectura server.", 0));
     xhr.send(form);
   });
 }

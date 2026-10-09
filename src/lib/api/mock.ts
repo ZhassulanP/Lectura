@@ -20,11 +20,35 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 const now = () => new Date().toISOString();
 
 const sampleSlides: Slide[] = [
-  { number: 1, title: "Introduction to Thermodynamics", content: "Course overview. Systems, surroundings and boundaries. Why energy accounting matters." },
-  { number: 2, title: "The First Law", content: "Energy is conserved. ΔU = Q − W. Internal energy is a state function." },
-  { number: 3, title: "Work and Heat", content: "Work: energy transfer by macroscopic force. Heat: transfer due to temperature difference. Sign conventions." },
-  { number: 4, title: "Entropy", content: "Entropy as a measure of dispersal. dS = δQ_rev / T. Second law: total entropy of an isolated system never decreases." },
-  { number: 5, title: "Carnot Engine", content: "Ideal reversible cycle. Efficiency η = 1 − T_c / T_h. No real engine exceeds Carnot efficiency." },
+  {
+    number: 1,
+    title: "Introduction to Thermodynamics",
+    content:
+      "Course overview. Systems, surroundings and boundaries. Why energy accounting matters.",
+  },
+  {
+    number: 2,
+    title: "The First Law",
+    content: "Energy is conserved. ΔU = Q − W. Internal energy is a state function.",
+  },
+  {
+    number: 3,
+    title: "Work and Heat",
+    content:
+      "Work: energy transfer by macroscopic force. Heat: transfer due to temperature difference. Sign conventions.",
+  },
+  {
+    number: 4,
+    title: "Entropy",
+    content:
+      "Entropy as a measure of dispersal. dS = δQ_rev / T. Second law: total entropy of an isolated system never decreases.",
+  },
+  {
+    number: 5,
+    title: "Carnot Engine",
+    content:
+      "Ideal reversible cycle. Efficiency η = 1 − T_c / T_h. No real engine exceeds Carnot efficiency.",
+  },
 ];
 
 const mockQuizAnswers: Record<string, { correct: string; explanation: string }> = {};
@@ -79,31 +103,16 @@ export const mockApi = {
   },
 
   async upload(input: UploadInput, onProgress: (pct: number) => void): Promise<Presentation> {
-    for (let p = 0; p <= 100; p += 10) {
-      onProgress(p);
-      await wait(120);
-    }
-    const ext = input.file.name.toLowerCase().endsWith(".pptx") ? "PPTX" : "PDF";
-    const p: Presentation = {
-      id: uid(),
-      title: input.file.name.replace(/\.(pdf|pptx)$/i, ""),
-      filename: input.file.name,
-      fileType: ext,
-      fileSizeBytes: input.file.size,
-      uploadedAt: now(),
-      slideCount: null,
-      status: "EXTRACTING",
-      subject: input.subject || null,
-      description: input.description || null,
-    };
-    db.presentations.push(p);
-    // Simulated extraction. Mock cannot read the real file, so it reuses sample slides.
-    setTimeout(() => {
-      p.status = "READY";
-      p.slideCount = sampleSlides.length;
-      db.slides[p.id] = sampleSlides;
-    }, 4000);
-    return { ...p };
+    throw new Error(
+      "Demo mode cannot upload or extract your file. Connect the backend to upload presentations.",
+    );
+  },
+
+  async deletePresentation(id: string): Promise<void> {
+    find(id);
+    db.presentations = db.presentations.filter((p) => p.id !== id);
+    delete db.slides[id];
+    delete db.materials[id];
   },
 
   async generateNotes(id: string): Promise<StudyNotes> {
@@ -117,22 +126,36 @@ export const mockApi = {
       sections: [
         {
           heading: "The First Law of Thermodynamics",
-          summary: "Energy cannot be created or destroyed; changes in internal energy equal heat added minus work done by the system.",
-          definitions: [{ term: "Internal energy (U)", definition: "Total microscopic energy of a system; a state function." }],
+          summary:
+            "Energy cannot be created or destroyed; changes in internal energy equal heat added minus work done by the system.",
+          definitions: [
+            {
+              term: "Internal energy (U)",
+              definition: "Total microscopic energy of a system; a state function.",
+            },
+          ],
           formulas: ["ΔU = Q − W"],
-          examples: ["Gas heated in a piston: some heat raises U, the rest does work pushing the piston."],
+          examples: [
+            "Gas heated in a piston: some heat raises U, the rest does work pushing the piston.",
+          ],
           sourceSlides: [2, 3],
         },
         {
           heading: "Entropy and the Second Law",
           summary: "Entropy quantifies energy dispersal. In an isolated system it never decreases.",
-          definitions: [{ term: "Entropy (S)", definition: "State function; reversible change dS = δQ_rev / T." }],
+          definitions: [
+            {
+              term: "Entropy (S)",
+              definition: "State function; reversible change dS = δQ_rev / T.",
+            },
+          ],
           formulas: ["dS = δQ_rev / T"],
           sourceSlides: [4],
         },
         {
           heading: "Carnot Efficiency",
-          summary: "The Carnot cycle sets the upper limit on heat engine efficiency between two reservoirs.",
+          summary:
+            "The Carnot cycle sets the upper limit on heat engine efficiency between two reservoirs.",
           formulas: ["η = 1 − T_c / T_h"],
           examples: ["T_h = 500 K, T_c = 300 K → η = 40%."],
           sourceSlides: [5],
@@ -144,36 +167,103 @@ export const mockApi = {
   },
 
   async generateQuiz(id: string, opts: QuizOptions): Promise<Quiz> {
+    find(id);
     await wait(1200);
     const bank = [
-      { type: "MULTIPLE_CHOICE" as const, prompt: "Which expression states the first law?", options: ["ΔU = Q − W", "ΔS ≥ 0", "PV = nRT", "η = 1 − T_c/T_h"], correct: "ΔU = Q − W", explanation: "The first law is energy conservation: ΔU = Q − W.", src: [2] },
-      { type: "MULTIPLE_CHOICE" as const, prompt: "The Carnot efficiency depends on…", options: ["Working fluid", "Reservoir temperatures", "Engine size", "Pressure"], correct: "Reservoir temperatures", explanation: "η = 1 − T_c/T_h depends only on the two temperatures.", src: [5] },
-      { type: "SHORT_ANSWER" as const, prompt: "Name the quantity that never decreases in an isolated system.", correct: "Entropy", explanation: "The second law: total entropy of an isolated system never decreases.", src: [4] },
-      { type: "MULTIPLE_CHOICE" as const, prompt: "Heat is energy transferred due to…", options: ["A force", "A temperature difference", "Mass flow", "Pressure"], correct: "A temperature difference", explanation: "Heat flows because of a temperature difference.", src: [3] },
-      { type: "SHORT_ANSWER" as const, prompt: "Internal energy is a ___ function.", correct: "State", explanation: "U depends only on the state, not the path.", src: [2] },
+      {
+        type: "MULTIPLE_CHOICE" as const,
+        prompt: "Which expression states the first law?",
+        options: ["ΔU = Q − W", "ΔS ≥ 0", "PV = nRT", "η = 1 − T_c/T_h"],
+        correct: "ΔU = Q − W",
+        explanation: "The first law is energy conservation: ΔU = Q − W.",
+        src: [2],
+      },
+      {
+        type: "MULTIPLE_CHOICE" as const,
+        prompt: "The Carnot efficiency depends on…",
+        options: ["Working fluid", "Reservoir temperatures", "Engine size", "Pressure"],
+        correct: "Reservoir temperatures",
+        explanation: "η = 1 − T_c/T_h depends only on the two temperatures.",
+        src: [5],
+      },
+      {
+        type: "SHORT_ANSWER" as const,
+        prompt: "Name the quantity that never decreases in an isolated system.",
+        correct: "Entropy",
+        explanation: "The second law: total entropy of an isolated system never decreases.",
+        src: [4],
+      },
+      {
+        type: "MULTIPLE_CHOICE" as const,
+        prompt: "Heat is energy transferred due to…",
+        options: ["A force", "A temperature difference", "Mass flow", "Pressure"],
+        correct: "A temperature difference",
+        explanation: "Heat flows because of a temperature difference.",
+        src: [3],
+      },
+      {
+        type: "SHORT_ANSWER" as const,
+        prompt: "Internal energy is a ___ function.",
+        correct: "State",
+        explanation: "U depends only on the state, not the path.",
+        src: [2],
+      },
     ];
     const questions = Array.from({ length: opts.questionCount }, (_, i) => {
       const b = bank[i % bank.length]!;
       const qid = uid();
       mockQuizAnswers[qid] = { correct: b.correct, explanation: b.explanation };
-      return { id: qid, type: b.type, prompt: b.prompt, ...(b.options ? { options: b.options } : {}), sourceSlides: b.src };
+      return {
+        id: qid,
+        type: b.type,
+        prompt: b.prompt,
+        ...(b.options ? { options: b.options } : {}),
+        sourceSlides: b.src,
+      };
     });
-    const quiz: Quiz = { id: uid(), presentationId: id, createdAt: now(), difficulty: opts.difficulty, questions };
+    const quiz: Quiz = {
+      id: uid(),
+      presentationId: id,
+      createdAt: now(),
+      difficulty: opts.difficulty,
+      questions,
+    };
     materialsFor(id).quizzes.unshift(quiz);
     return quiz;
   },
 
   async generateFlashcards(id: string): Promise<FlashcardDeck> {
+    find(id);
     await wait(1000);
     const deck: FlashcardDeck = {
       id: uid(),
       presentationId: id,
       createdAt: now(),
       cards: [
-        { id: uid(), front: "First law of thermodynamics", back: "ΔU = Q − W — energy is conserved.", sourceSlides: [2] },
-        { id: uid(), front: "Entropy", back: "Measure of energy dispersal; dS = δQ_rev / T.", sourceSlides: [4] },
-        { id: uid(), front: "Carnot efficiency", back: "η = 1 − T_c / T_h, the maximum possible efficiency.", sourceSlides: [5] },
-        { id: uid(), front: "Heat vs. work", back: "Heat: transfer by temperature difference. Work: transfer by macroscopic force.", sourceSlides: [3] },
+        {
+          id: uid(),
+          front: "First law of thermodynamics",
+          back: "ΔU = Q − W — energy is conserved.",
+          sourceSlides: [2],
+        },
+        {
+          id: uid(),
+          front: "Entropy",
+          back: "Measure of energy dispersal; dS = δQ_rev / T.",
+          sourceSlides: [4],
+        },
+        {
+          id: uid(),
+          front: "Carnot efficiency",
+          back: "η = 1 − T_c / T_h, the maximum possible efficiency.",
+          sourceSlides: [5],
+        },
+        {
+          id: uid(),
+          front: "Heat vs. work",
+          back: "Heat: transfer by temperature difference. Work: transfer by macroscopic force.",
+          sourceSlides: [3],
+        },
       ],
     };
     materialsFor(id).flashcards.unshift(deck);
@@ -182,7 +272,8 @@ export const mockApi = {
 
   async getMaterials(id: string) {
     await wait(250);
-    return materialsFor(id);
+    find(id);
+    return structuredClone(materialsFor(id));
   },
 
   async submitAttempt(quizId: string, answers: QuizAnswer[]): Promise<QuizAttempt> {
@@ -190,7 +281,18 @@ export const mockApi = {
     const results = answers.map((a) => {
       const key = mockQuizAnswers[a.questionId] ?? { correct: "—", explanation: "" };
       const correct = !!a.answer && a.answer.trim().toLowerCase() === key.correct.toLowerCase();
-      return { questionId: a.questionId, givenAnswer: a.answer, correct, correctAnswer: key.correct, explanation: key.explanation };
+      return {
+        questionId: a.questionId,
+        givenAnswer: a.answer,
+        correct,
+        correctAnswer: key.correct,
+        explanation: key.explanation,
+        sourceSlides:
+          Object.values(db.materials)
+            .flatMap((m) => m.quizzes)
+            .find((q) => q.id === quizId)
+            ?.questions.find((q) => q.id === a.questionId)?.sourceSlides ?? [],
+      };
     });
     const attempt: QuizAttempt = {
       id: uid(),

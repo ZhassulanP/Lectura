@@ -10,6 +10,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { USE_MOCKS } from "@/lib/api";
 
@@ -21,18 +22,24 @@ const items = [
 ] as const;
 
 export function AppSidebar() {
+  const { setOpenMobile } = useSidebar();
   const path = useRouterState({ select: (r) => r.location.pathname });
   const isActive = (url: string) => (url === "/" ? path === "/" : path.startsWith(url));
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <Link to="/" className="flex items-center gap-2 px-2 py-3">
+        <Link
+          to="/"
+          aria-label="Lectura dashboard"
+          onClick={() => setOpenMobile(false)}
+          className="flex items-center gap-2 px-2 py-3"
+        >
           <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
             <Sparkles className="size-4" />
           </span>
           <span className="font-display text-xl font-semibold group-data-[collapsible=icon]:hidden">
-            SlideWise
+            Lectura
           </span>
         </Link>
       </SidebarHeader>
@@ -43,7 +50,11 @@ export function AppSidebar() {
               {items.map((item) => (
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
-                    <Link to={item.url}>
+                    <Link
+                      to={item.url}
+                      aria-current={isActive(item.url) ? "page" : undefined}
+                      onClick={() => setOpenMobile(false)}
+                    >
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>
@@ -58,7 +69,7 @@ export function AppSidebar() {
         <SidebarFooter className="group-data-[collapsible=icon]:hidden">
           <div className="rounded-lg border border-dashed bg-highlight/30 p-3 text-xs text-highlight-foreground">
             <strong className="block">Demo mode</strong>
-            Sample data only — not connected to the SlideWise server.
+            Sample data only — not connected to the Lectura server.
           </div>
         </SidebarFooter>
       )}

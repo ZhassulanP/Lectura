@@ -1,0 +1,9 @@
+from typing import Protocol
+
+from app.schemas import CardsContent, NotesContent, QuizContent, QuizOptions, Slide
+
+
+class StudyProvider(Protocol):
+    async def generate_notes(self, slides: list[Slide]) -> NotesContent: ...
+    async def generate_quiz(self, slides: list[Slide], options: QuizOptions) -> QuizContent: ...
+    async def generate_flashcards(self, slides: list[Slide]) -> CardsContent: ...

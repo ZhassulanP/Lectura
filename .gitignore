@@ -15,6 +15,14 @@ dist-ssr
 .tanstack/**
 .nitro
 *.local
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.db
 
 # Wrangler / Cloudflare
 .wrangler/
@@ -30,3 +38,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+AGENTS.md

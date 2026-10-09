@@ -8,9 +8,9 @@ import { useMaterials } from "@/lib/api/queries";
 export const Route = createFileRoute("/presentations/$id/quiz/$quizId")({
   head: () => ({
     meta: [
-      { title: "Quiz — SlideWise" },
+      { title: "Quiz — Lectura" },
       { name: "description", content: "Test your understanding of the lecture slides." },
-      { property: "og:title", content: "Quiz — SlideWise" },
+      { property: "og:title", content: "Quiz — Lectura" },
       { property: "og:description", content: "Test your understanding of the lecture slides." },
     ],
   }),
@@ -20,18 +20,28 @@ export const Route = createFileRoute("/presentations/$id/quiz/$quizId")({
 function QuizPage() {
   const { id, quizId } = Route.useParams();
   const m = useMaterials(id);
-  if (m.isLoading) return <LoadingState />;
+  if (m.isPending) return <LoadingState />;
   if (m.isError) return <ErrorState error={m.error} onRetry={() => m.refetch()} />;
   const quiz = m.data?.quizzes.find((q) => q.id === quizId);
   if (!quiz) return <ErrorState error={new Error("This quiz couldn't be found.")} />;
-  if (!quiz.questions.length) return <ErrorState error={new Error("This quiz has no questions.")} />;
+  if (!quiz.questions.length)
+    return <ErrorState error={new Error("This quiz has no questions.")} />;
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <Button asChild variant="ghost" size="sm" className="-ml-2">
-        <Link to="/presentations/$id" params={{ id }}><ArrowLeft /> Back to presentation</Link>
+        <Link to="/presentations/$id" params={{ id }}>
+          <ArrowLeft /> Back to presentation
+        </Link>
       </Button>
-      <PageHeader eyebrow={`${quiz.difficulty.toLowerCase()} · ${quiz.questions.length} questions`} title="Quiz" />
-      <QuizRunner quiz={quiz} />
+      <PageHeader
+        eyebrow={`${quiz.difficulty.toLowerCase()} · ${quiz.questions.length} questions`}
+        title="Quiz"
+      />
+      <QuizRunner
+        key={quiz.id}
+        quiz={quiz}
+        attempts={m.data?.attempts.filter((a) => a.quizId === quiz.id) ?? []}
+      />
     </div>
   );
 }

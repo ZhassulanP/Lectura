@@ -37,6 +37,7 @@ export interface StudyNotes {
   presentationId: string;
   createdAt: string;
   title: string;
+  overview?: string;
   sections: NoteSection[];
 }
 
@@ -44,7 +45,7 @@ export interface QuizQuestion {
   id: string;
   type: QuestionType;
   prompt: string;
-  options?: string[];
+  options?: string[] | null;
   sourceSlides: number[];
 }
 
@@ -67,6 +68,7 @@ export interface QuestionResult {
   correct: boolean;
   correctAnswer: string;
   explanation: string;
+  sourceSlides: number[];
 }
 
 export interface QuizAttempt {

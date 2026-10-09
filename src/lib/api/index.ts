@@ -21,6 +21,7 @@ const realApi = {
   listPresentations: () => request<Presentation[]>("/presentations"),
   getPresentation: (id: string) => request<Presentation>(`/presentations/${id}`),
   getSlides: (id: string) => request<Slide[]>(`/presentations/${id}/slides`),
+  deletePresentation: (id: string) => request<void>(`/presentations/${id}`, { method: "DELETE" }),
   upload: (input: UploadInput, onProgress: (pct: number) => void) => {
     const form = new FormData();
     form.append("file", input.file);
@@ -28,7 +29,8 @@ const realApi = {
     if (input.description) form.append("description", input.description);
     return uploadMultipart<Presentation>("/presentations", form, onProgress);
   },
-  generateNotes: (id: string) => request<StudyNotes>(`/presentations/${id}/notes`, { method: "POST" }),
+  generateNotes: (id: string) =>
+    request<StudyNotes>(`/presentations/${id}/notes`, { method: "POST" }),
   generateQuiz: (id: string, opts: QuizOptions) =>
     request<Quiz>(`/presentations/${id}/quizzes`, { method: "POST", body: JSON.stringify(opts) }),
   generateFlashcards: (id: string) =>

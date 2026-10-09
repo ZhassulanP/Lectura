@@ -7,11 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpload, usePresentation } from "@/lib/api/queries";
-import { MAX_UPLOAD_BYTES } from "@/lib/api/config";
+import { MAX_UPLOAD_BYTES, USE_MOCKS } from "@/lib/api/config";
 import { formatBytes } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { validateFile } from "./validateFile";
 import { StatusBadge } from "@/components/presentations/StatusBadge";
+import { ErrorState } from "@/components/common/States";
+import type { Presentation } from "@/lib/types";
 
 export function UploadPanel({ id = "upload" }: { id?: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -24,6 +26,7 @@ export function UploadPanel({ id = "upload" }: { id?: string }) {
   const upload = useUpload(setProgress);
 
   const pick = (f: File | undefined) => {
+    if (upload.isPending) return;
     if (!f) return;
     const err = validateFile(f);
     setError(err);
@@ -35,6 +38,10 @@ export function UploadPanel({ id = "upload" }: { id?: string }) {
   const onDrop = (e: DragEvent) => {
     e.preventDefault();
     setDragging(false);
+    if (e.dataTransfer.files.length > 1) {
+      setError("Upload one presentation at a time.");
+      return;
+    }
     pick(e.dataTransfer.files?.[0]);
   };
 
@@ -47,10 +54,21 @@ export function UploadPanel({ id = "upload" }: { id?: string }) {
     upload.reset();
   };
 
-  if (upload.isSuccess) return <UploadedStatus id={upload.data.id} onAnother={reset} />;
+  if (upload.isSuccess)
+    return (
+      <div id={id}>
+        <UploadedStatus initial={upload.data} onAnother={reset} />
+      </div>
+    );
 
   return (
     <div id={id} className="space-y-5">
+      {USE_MOCKS && (
+        <p className="text-sm text-muted-foreground">
+          File uploads require the backend. You can explore the sample presentation below in demo
+          mode.
+        </p>
+      )}
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -103,7 +121,8 @@ export function UploadPanel({ id = "upload" }: { id?: string }) {
           className="space-y-4 rounded-xl border bg-card p-5"
           onSubmit={(e) => {
             e.preventDefault();
-            upload.mutate({ file, subject: subject.trim(), description: description.trim() });
+            if (!upload.isPending)
+              upload.mutate({ file, subject: subject.trim(), description: description.trim() });
           }}
         >
           <div className="flex items-center gap-3">
@@ -112,7 +131,13 @@ export function UploadPanel({ id = "upload" }: { id?: string }) {
               <p className="text-xs text-muted-foreground">{formatBytes(file.size)}</p>
             </div>
             {!upload.isPending && (
-              <Button type="button" variant="ghost" size="icon" aria-label="Remove file" onClick={reset}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Remove file"
+                onClick={reset}
+              >
                 <X />
               </Button>
             )}
@@ -120,28 +145,49 @@ export function UploadPanel({ id = "upload" }: { id?: string }) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor={`${id}-subject`}>Subject (optional)</Label>
-              <Input id={`${id}-subject`} value={subject} maxLength={100} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Physics 201" disabled={upload.isPending} />
+              <Input
+                id={`${id}-subject`}
+                value={subject}
+                maxLength={100}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="e.g. Physics 201"
+                disabled={upload.isPending}
+              />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor={`${id}-desc`}>Description (optional)</Label>
-              <Textarea id={`${id}-desc`} value={description} maxLength={500} onChange={(e) => setDescription(e.target.value)} placeholder="What is this lecture about?" rows={2} disabled={upload.isPending} />
+              <Textarea
+                id={`${id}-desc`}
+                value={description}
+                maxLength={500}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="What is this lecture about?"
+                rows={2}
+                disabled={upload.isPending}
+              />
             </div>
           </div>
           {upload.isPending && (
             <div className="space-y-1.5" aria-live="polite">
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Uploading…</span>
+                <span>{progress === 100 ? "Extracting content…" : "Uploading…"}</span>
                 <span>{progress}%</span>
               </div>
               <Progress value={progress} aria-label="Upload progress" />
             </div>
           )}
           {upload.isError && (
-            <p role="alert" className="text-sm text-destructive">{upload.error.message}</p>
+            <p role="alert" className="text-sm text-destructive">
+              {upload.error.message}
+            </p>
           )}
           <Button type="submit" disabled={upload.isPending} className="w-full sm:w-auto">
             {upload.isPending ? <Loader2 className="animate-spin" /> : <FileUp />}
-            {upload.isPending ? "Uploading" : upload.isError ? "Retry upload" : "Upload presentation"}
+            {upload.isPending
+              ? "Uploading"
+              : upload.isError
+                ? "Retry upload"
+                : "Upload presentation"}
           </Button>
         </form>
       )}
@@ -149,36 +195,62 @@ export function UploadPanel({ id = "upload" }: { id?: string }) {
   );
 }
 
-function UploadedStatus({ id, onAnother }: { id: string; onAnother: () => void }) {
-  const { data } = usePresentation(id);
-  const status = data?.status ?? "EXTRACTING";
+function UploadedStatus({ initial, onAnother }: { initial: Presentation; onAnother: () => void }) {
+  const { data, isError, error, refetch } = usePresentation(initial.id);
+  const id = initial.id;
+  const status = data?.status ?? initial.status;
   const steps = ["Uploading", "Extracting content", "Ready"];
-  const current = status === "READY" ? 2 : 1;
+  const current = status === "READY" ? 2 : status === "UPLOADING" ? 0 : 1;
   return (
     <div className="space-y-5 rounded-xl border bg-card p-6" aria-live="polite">
       <div className="flex items-center justify-between gap-3">
-        <p className="truncate font-medium">{data?.filename ?? "Your file"}</p>
+        <p className="truncate font-medium">{data?.filename ?? initial.filename}</p>
         <StatusBadge status={status} />
       </div>
       <ol className="grid grid-cols-3 gap-2">
         {steps.map((s, i) => (
           <li key={s} className="space-y-2">
-            <div className={cn("h-1.5 rounded-full", status === "FAILED" ? "bg-destructive/40" : i <= current ? "bg-primary" : "bg-muted")} />
-            <span className={cn("flex items-center gap-1 text-xs", i <= current ? "text-foreground" : "text-muted-foreground")}>
-              {i < current || status === "READY" ? <CheckCircle2 className="size-3.5 text-success" /> : i === current && status !== "FAILED" ? <Loader2 className="size-3.5 animate-spin" /> : null}
+            <div
+              className={cn(
+                "h-1.5 rounded-full",
+                status === "FAILED"
+                  ? "bg-destructive/40"
+                  : i <= current
+                    ? "bg-primary"
+                    : "bg-muted",
+              )}
+            />
+            <span
+              className={cn(
+                "flex items-center gap-1 text-xs",
+                i <= current ? "text-foreground" : "text-muted-foreground",
+              )}
+            >
+              {i < current || status === "READY" ? (
+                <CheckCircle2 className="size-3.5 text-success" />
+              ) : i === current && status !== "FAILED" ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : null}
               {s}
             </span>
           </li>
         ))}
       </ol>
-      {status === "FAILED" && <p className="text-sm text-destructive">{data?.errorMessage ?? "Content extraction failed."}</p>}
+      {isError && <ErrorState error={error} onRetry={() => refetch()} />}
+      {status === "FAILED" && (
+        <p className="text-sm text-destructive">
+          {data?.errorMessage ?? "Content extraction failed."}
+        </p>
+      )}
       <div className="flex flex-wrap gap-2">
-        <Button asChild disabled={status !== "READY"}>
+        <Button asChild>
           <Link to="/presentations/$id" params={{ id }}>
             {status === "READY" ? "Open presentation" : "View progress"}
           </Link>
         </Button>
-        <Button variant="outline" onClick={onAnother}>Upload another</Button>
+        <Button variant="outline" onClick={onAnother}>
+          Upload another
+        </Button>
       </div>
     </div>
   );

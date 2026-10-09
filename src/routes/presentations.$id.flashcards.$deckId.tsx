@@ -8,9 +8,9 @@ import { useMaterials } from "@/lib/api/queries";
 export const Route = createFileRoute("/presentations/$id/flashcards/$deckId")({
   head: () => ({
     meta: [
-      { title: "Flashcards — SlideWise" },
+      { title: "Flashcards — Lectura" },
       { name: "description", content: "Flip through key concepts from your lecture." },
-      { property: "og:title", content: "Flashcards — SlideWise" },
+      { property: "og:title", content: "Flashcards — Lectura" },
       { property: "og:description", content: "Flip through key concepts from your lecture." },
     ],
   }),
@@ -20,17 +20,20 @@ export const Route = createFileRoute("/presentations/$id/flashcards/$deckId")({
 function FlashcardsPage() {
   const { id, deckId } = Route.useParams();
   const m = useMaterials(id);
-  if (m.isLoading) return <LoadingState />;
+  if (m.isPending) return <LoadingState />;
   if (m.isError) return <ErrorState error={m.error} onRetry={() => m.refetch()} />;
   const deck = m.data?.flashcards.find((d) => d.id === deckId);
-  if (!deck || !deck.cards.length) return <ErrorState error={new Error("This flashcard deck couldn't be found.")} />;
+  if (!deck || !deck.cards.length)
+    return <ErrorState error={new Error("This flashcard deck couldn't be found.")} />;
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <Button asChild variant="ghost" size="sm" className="-ml-2">
-        <Link to="/presentations/$id" params={{ id }}><ArrowLeft /> Back to presentation</Link>
+        <Link to="/presentations/$id" params={{ id }}>
+          <ArrowLeft /> Back to presentation
+        </Link>
       </Button>
       <PageHeader eyebrow={`${deck.cards.length} cards`} title="Flashcards" />
-      <FlashcardViewer deck={deck} />
+      <FlashcardViewer key={deck.id} deck={deck} />
     </div>
   );
 }

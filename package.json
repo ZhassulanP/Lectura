@@ -1,5 +1,5 @@
 {
-  "name": "tanstack_start_ts",
+  "name": "lectura",
   "private": true,
   "sideEffects": false,
   "type": "module",
@@ -11,7 +11,9 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "start": "node .output/server/index.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"
@@ -72,7 +74,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
-    "@lovable.dev/vite-tanstack-config": "2.25.3",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^16.0.0",
     "@types/node": "^22.16.5",

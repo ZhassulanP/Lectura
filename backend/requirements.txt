@@ -1,0 +1,12 @@
+fastapi>=0.135,<0.144
+uvicorn[standard]>=0.35,<0.42
+pydantic>=2.12,<3
+pydantic-settings>=2.10,<3
+SQLAlchemy>=2.0.43,<2.1
+alembic>=1.16,<2
+psycopg[binary]>=3.2,<4
+pypdf>=6,<7
+python-pptx>=1.0.2,<2
+python-multipart>=0.0.22,<0.1
+httpx>=0.28,<0.29
+pytest>=8.4,<10

@@ -13,7 +13,7 @@ export function FlashcardViewer({ deck }: { deck: FlashcardDeck }) {
   const [pos, setPos] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [marks, setMarks] = useState<Record<string, Mark>>({});
-  const card = deck.cards[order[pos]];
+  const card = deck.cards[order[pos]!]!;
 
   const counts = useMemo(() => {
     const v = Object.values(marks);
@@ -32,7 +32,7 @@ export function FlashcardViewer({ deck }: { deck: FlashcardDeck }) {
     const o = [...order];
     for (let i = o.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [o[i], o[j]] = [o[j], o[i]];
+      [o[i], o[j]] = [o[j]!, o[i]!];
     }
     setOrder(o);
     setPos(0);

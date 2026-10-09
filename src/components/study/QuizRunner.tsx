@@ -16,7 +16,7 @@ export function QuizRunner({ quiz }: { quiz: Quiz }) {
   const [result, setResult] = useState<QuizAttempt | null>(null);
   const submit = useSubmitAttempt(quiz.presentationId, quiz.id);
 
-  const q = quiz.questions[index];
+  const q = quiz.questions[index]!;
   const answered = quiz.questions.filter((x) => answers[x.id]?.trim()).length;
   const set = (v: string) => setAnswers((a) => ({ ...a, [q.id]: v }));
 

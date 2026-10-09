@@ -153,10 +153,10 @@ export const mockApi = {
       { type: "SHORT_ANSWER" as const, prompt: "Internal energy is a ___ function.", correct: "State", explanation: "U depends only on the state, not the path.", src: [2] },
     ];
     const questions = Array.from({ length: opts.questionCount }, (_, i) => {
-      const b = bank[i % bank.length];
+      const b = bank[i % bank.length]!;
       const qid = uid();
       mockQuizAnswers[qid] = { correct: b.correct, explanation: b.explanation };
-      return { id: qid, type: b.type, prompt: b.prompt, options: b.options, sourceSlides: b.src };
+      return { id: qid, type: b.type, prompt: b.prompt, ...(b.options ? { options: b.options } : {}), sourceSlides: b.src };
     });
     const quiz: Quiz = { id: uid(), presentationId: id, createdAt: now(), difficulty: opts.difficulty, questions };
     materialsFor(id).quizzes.unshift(quiz);
